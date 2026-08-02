@@ -8,14 +8,25 @@ from __future__ import annotations
 
 from typing import Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..adapters.base import Role
 
 AdapterName = Literal["cli_claude_code", "cli_codex", "http_openai", "fake"]
 
 
-class CliConfig(BaseModel):
+class StrictModel(BaseModel):
+    """Config base: unknown keys are a hard error.
+
+    "Strict and fail-loud" has to be enforced, not asserted — with pydantic's
+    default (ignore extras), a typo like ``max_rouds: 1`` would silently fall
+    back to the default budget and the run would use limits the user never set.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class CliConfig(StrictModel):
     command: List[str] = Field(..., min_length=1)
     base_args: List[str] = Field(default_factory=list)
     prompt_via: Literal["stdin", "arg"] = "stdin"
@@ -25,12 +36,12 @@ class CliConfig(BaseModel):
     total_timeout_s: float = 300.0
 
 
-class PriceTable(BaseModel):
+class PriceTable(StrictModel):
     input: float = 0.0   # USD per million input tokens
     output: float = 0.0  # USD per million output tokens
 
 
-class HttpConfig(BaseModel):
+class HttpConfig(StrictModel):
     base_url: str
     api_key_env: Optional[str] = None  # None => no auth (Ollama on a tailnet)
     metered: bool = False
@@ -40,12 +51,17 @@ class HttpConfig(BaseModel):
 
     @model_validator(mode="after")
     def _metered_needs_price(self) -> "HttpConfig":
-        if self.metered and self.price_per_mtok is None:
-            raise ValueError("metered operator requires price_per_mtok")
+        if self.metered:
+            p = self.price_per_mtok
+            if p is None or (p.input <= 0 and p.output <= 0):
+                raise ValueError(
+                    "metered operator requires a non-zero price_per_mtok — an "
+                    "all-zero price table would never trip the dollar gate"
+                )
         return self
 
 
-class OperatorConfig(BaseModel):
+class OperatorConfig(StrictModel):
     role: Role
     enabled: bool = True
     adapter: AdapterName
@@ -64,7 +80,7 @@ class OperatorConfig(BaseModel):
         return self
 
 
-class FourthConfig(BaseModel):
+class FourthConfig(StrictModel):
     """The pluggable fourth seat. Two dials: ``enabled`` (on the panel at all)
     and ``variant`` (which backing it uses)."""
 
@@ -83,7 +99,7 @@ class FourthConfig(BaseModel):
         return self
 
 
-class OperatorsFile(BaseModel):
+class OperatorsFile(StrictModel):
     version: int = 1
     operators: Dict[str, OperatorConfig]
     fourth: FourthConfig = Field(default_factory=FourthConfig)
@@ -96,12 +112,12 @@ class OperatorsFile(BaseModel):
         return self
 
 
-class CompactionConfig(BaseModel):
+class CompactionConfig(StrictModel):
     trigger_fraction: float = 0.6  # of per_turn_token_cap
     summarizer: str = "local"       # operator key used to compact old discussion
 
 
-class RunConfig(BaseModel):
+class RunConfig(StrictModel):
     max_rounds: int = 3
     max_wall_clock_s: float = 1800.0
     max_cost_usd: float = 2.00       # gates metered operators only
@@ -110,18 +126,18 @@ class RunConfig(BaseModel):
     compaction: CompactionConfig = Field(default_factory=CompactionConfig)
 
 
-class TerminationConfig(BaseModel):
+class TerminationConfig(StrictModel):
     consensus_requires_adversary_certify: bool = True
 
 
-class OutputConfig(BaseModel):
+class OutputConfig(StrictModel):
     dir: str = "runs/{timestamp}-{slug}"
     artifacts: List[str] = Field(
         default_factory=lambda: ["transcript.jsonl", "final_artifact.md", "run_report.md"]
     )
 
 
-class WarroomFile(BaseModel):
+class WarroomFile(StrictModel):
     run: RunConfig = Field(default_factory=RunConfig)
     termination: TerminationConfig = Field(default_factory=TerminationConfig)
     output: OutputConfig = Field(default_factory=OutputConfig)

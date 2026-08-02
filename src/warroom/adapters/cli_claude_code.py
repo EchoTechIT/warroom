@@ -31,10 +31,19 @@ class ClaudeCodeAdapter(CliShellAdapter):
         of ``assistant`` message deltas, and usage arrives on a terminal
         ``result``/``message_stop`` event.
         """
-        if returncode != 0 and not stdout.strip():
-            # A non-zero exit with no output usually means a rate cap or a
-            # not-logged-in seat -> treat as UNAVAILABLE, not a hard error.
-            return self._unavailable(f"claude exited {returncode}: {stderr.strip()[:200]}")
+        if returncode != 0:
+            if not stdout.strip():
+                # A non-zero exit with no output usually means a rate cap or a
+                # not-logged-in seat -> treat as UNAVAILABLE, not a hard error.
+                return self._unavailable(f"claude exited {returncode}: {stderr.strip()[:200]}")
+            # Non-zero WITH output is a crashed or truncated stream. Partial
+            # text must never enter the transcript as an ok turn — surface a
+            # retriable ERROR instead.
+            return TurnResult(
+                self.name, self.role, "", status=Status.ERROR,
+                error=f"claude exited {returncode} with partial output: {stderr.strip()[:200]}",
+                raw=stdout[:500],
+            )
 
         text_parts: List[str] = []
         usage = Usage(metered=False)  # flat-rate seat

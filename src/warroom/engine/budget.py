@@ -7,8 +7,11 @@ The scarce resource is asymmetric, so the accounting is too:
   **round count**, because their real limit is subscription rate caps and GPU
   time, not money.
 
-Budget exhaustion is a *clean* terminal state: the engine jumps to SYNTHESIZE
-with whatever is current, flagged ``budget-truncated``.
+Budget exhaustion is a *clean* terminal state: once a hard limit is crossed no
+further operator calls are made (``hard_stop`` is checked before every call,
+including SYNTHESIZE) and the run ends with whatever artifact is current,
+flagged ``budget-truncated``. Overshoot is bounded by the one call in flight
+when the limit was crossed — never a full round.
 """
 from __future__ import annotations
 
@@ -41,6 +44,18 @@ class Budget:
 
     def elapsed_s(self, now: float | None = None) -> float:
         return (now if now is not None else time.monotonic()) - self.started_at
+
+    def hard_stop(self, now: float | None = None) -> bool:
+        """Non-mutating pre-call check: is a hard limit already crossed?
+
+        Consulted before *every* operator call so an exhausted budget stops the
+        very next call, not just the next GATE. Rounds are a GATE concern and
+        are not checked here.
+        """
+        return (
+            self.elapsed_s(now) > self.max_wall_clock_s
+            or self.spent_usd > self.max_cost_usd
+        )
 
     def exhausted(self, round_no: int, now: float | None = None) -> bool:
         if round_no > self.max_rounds:

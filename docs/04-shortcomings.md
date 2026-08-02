@@ -82,9 +82,14 @@ handoff (review the seams before the transports), and it is the first thing
 
 - Is the consensus rule (`certify` **and** unchanged artifact) too eager or too
   strict? Could a stubborn architect + a lenient adversary certify a bad artifact?
-- The compaction summarizer runs a *synchronous* local call from inside an async
-  engine (`round_engine._compaction_summarizer`) and skips if a loop is already
-  running — that path needs a proper async redesign.
+- ~~The compaction summarizer runs a *synchronous* local call from inside an
+  async engine and skips if a loop is already running — that path needs a
+  proper async redesign.~~ **Resolved after the first adversarial review**: the
+  review proved the shim was worse than flagged (inside the running engine it
+  *always* failed, and the failure placeholder replaced real history).
+  Compaction is now natively async (`round_engine._maybe_compact` awaits the
+  local seat under a lock) and any summarizer failure leaves the transcript
+  intact. See `docs/06-gpt-sol-review-response.md`.
 - `architect_changed` is a normalized string inequality; a cosmetic reword counts
   as "changed" and blocks consensus. Is that the right sensitivity?
 - No persistence/resume across process restarts; a killed run loses in-flight

@@ -35,6 +35,8 @@ def _render_report(result: RunResult, now: _dt.datetime) -> str:
         f"- panel: {result.panel_note}",
         f"- budget-truncated: {result.truncated}",
     ]
+    if result.failed:
+        lines.insert(2, "- **RUN FAILED** — no usable artifact was produced; do not ship this output")
     if result.unavailable:
         lines.append(f"- unavailable operators: {', '.join(result.unavailable)}")
     b = result.budget

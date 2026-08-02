@@ -5,10 +5,15 @@ output parsing. Design decisions the reviewer should note:
 
 * Prompt is delivered on **stdin**, not argv — dodges shell escaping and
   arg-length limits. (``prompt_via: arg`` is supported but discouraged.)
-* Commands run in an **isolated scratch cwd** so a CLI that can edit files can
-  never touch the Warroom repo.
+* Commands run in a **scratch cwd** so relative-path writes land in a throwaway
+  temp dir instead of the Warroom repo. This is hygiene, **not a sandbox**: a
+  CLI that writes absolute paths can still reach the filesystem. Real isolation
+  must come from the tool's own sandbox flags (``sandbox: read-only`` for a
+  reviewer) or OS-level sandboxing around the whole Warroom process.
 * We spawn with ``create_subprocess_exec`` (argv array, no shell) — never
-  ``shell=True``.
+  ``shell=True`` — in a **new session/process group**, and a timed-out or
+  cancelled turn kills the whole group: an abandoned file-editing CLI must not
+  keep running (and editing) after its turn is over.
 * We rely on the CLI's *own* logged-in session for auth; Warroom stores no
   credentials.
 """
@@ -17,6 +22,7 @@ from __future__ import annotations
 import asyncio
 import os
 import shutil
+import signal
 import tempfile
 from typing import List, Optional
 
@@ -74,12 +80,33 @@ class CliShellAdapter(OperatorAdapter):
                 stderr=asyncio.subprocess.PIPE,
                 cwd=workdir,
                 env=os.environ.copy(),
+                start_new_session=True,  # own process group -> the whole CLI tree is killable
             )
-            out, err = await proc.communicate(input=stdin_bytes)
+            try:
+                out, err = await proc.communicate(input=stdin_bytes)
+            except asyncio.CancelledError:
+                # The policy layer's timeout cancels us here. Reap the child
+                # before propagating — an orphaned CLI keeps running (and, for
+                # a file-editing tool, keeps editing) long after its turn was
+                # abandoned.
+                self._kill(proc)
+                await proc.wait()
+                raise
             return self.parse(out.decode("utf-8", "replace"), err.decode("utf-8", "replace"), proc.returncode or 0)
         finally:
             if tmp is not None:
                 tmp.cleanup()
+
+    @staticmethod
+    def _kill(proc: "asyncio.subprocess.Process") -> None:
+        """Kill the subprocess and its process group (CLIs spawn helpers)."""
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        except (AttributeError, ProcessLookupError, PermissionError):
+            try:
+                proc.kill()
+            except ProcessLookupError:
+                pass
 
     async def invoke(self, turn: TurnRequest) -> TurnResult:  # pragma: no cover - overridden by stubs
         prompt = getattr(turn, "assembled_prompt", turn.phase_instruction)

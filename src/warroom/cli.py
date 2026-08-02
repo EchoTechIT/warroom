@@ -89,6 +89,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         quorum_min=policy.run.quorum_min_operators,
         compaction=policy.run.compaction.model_dump(),
         panel_note=note,
+        fourth_mode=spec.fourth.mode,
     )
 
     result = asyncio.run(engine.run(args.task))

@@ -17,7 +17,7 @@ operators:
       command: ["claude"]
       base_args: ["-p", "--output-format", "stream-json", "--no-color"]
       prompt_via: stdin            # avoids arg-length limits + shell escaping
-      workdir: scratch             # isolated temp cwd; never touches this repo
+      workdir: scratch             # temp cwd for relative writes — hygiene, not a sandbox
       first_token_timeout_s: 30
       total_timeout_s: 300
 
