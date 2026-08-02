@@ -1,0 +1,19 @@
+# Warroom run policy.
+run:
+  max_rounds: 3               # homelab runs shouldn't loop forever
+  max_wall_clock_s: 1800
+  max_cost_usd: 2.00          # gates METERED operators only (the cloud 4th slot)
+  per_turn_token_cap: 24000
+  quorum_min_operators: 2     # architect + >=1 critic must be available
+  compaction:
+    trigger_fraction: 0.6     # compact when a prompt would exceed 60% of the cap
+    summarizer: local         # use the free on-GPU seat to summarize old discussion
+
+termination:
+  # Consensus requires the ADVERSARY to certify "no material objection"
+  # (anti-sycophancy) — not merely the architect declaring itself done.
+  consensus_requires_adversary_certify: true
+
+output:
+  dir: runs/{timestamp}-{slug}
+  artifacts: [transcript.jsonl, final_artifact.md, run_report.md]

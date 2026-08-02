@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "warroom"
+version = "0.1.0"
+description = "A multi-operator AI war room: architect + adversary + local, with a pluggable fourth seat."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "pydantic>=2.5",
+    "pyyaml>=6.0",
+]
+
+# The offline path (fake panel, engine, tests) needs only the core deps above.
+# Real provider transports and nicer UX pull these in:
+[project.optional-dependencies]
+providers = [
+    "httpx>=0.27",     # HTTP OpenAI-compatible adapter (Ollama + cloud)
+    "tenacity>=8.2",   # retry/backoff (invoke.py ships a stdlib fallback)
+]
+cli = [
+    "rich>=13.7",      # optional pretty output; argparse core needs nothing
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[project.scripts]
+warroom = "warroom.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/warroom"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["src"]
