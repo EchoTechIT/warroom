@@ -1,0 +1,83 @@
+# Warroom panel definition.
+#
+# Each operator is one seat at the table. The engine talks to all of them through
+# one adapter contract; the `adapter` field picks the transport.
+#
+# Run offline against the process-free fake adapter with:  warroom --panel fake ...
+version: 1
+
+operators:
+  architect:
+    role: architect
+    enabled: true
+    adapter: cli_claude_code       # Claude Max 5x seat, driven headless
+    model: claude-fable-5          # passed to `claude --model`; pin, don't hardcode
+    charter: charters/architect.md
+    cli:
+      command: ["claude"]
+      base_args: ["-p", "--output-format", "stream-json", "--no-color"]
+      prompt_via: stdin            # avoids arg-length limits + shell escaping
+      workdir: scratch             # isolated temp cwd; never touches this repo
+      first_token_timeout_s: 30
+      total_timeout_s: 300
+
+  adversary:
+    role: adversary
+    enabled: true
+    adapter: cli_codex             # ChatGPT Plus seat via Codex CLI
+    model: gpt-sol                 # newest OpenAI model; alias in config, not code
+    charter: charters/adversary.md
+    cli:
+      command: ["codex", "exec"]
+      base_args: ["--json"]
+      prompt_via: stdin
+      sandbox: read-only           # a reviewer critiques text; it does not edit
+      first_token_timeout_s: 30
+      total_timeout_s: 300
+
+  local:
+    role: local
+    enabled: true
+    adapter: http_openai           # Ollama's OpenAI-compatible endpoint
+    model: qwen3.6-27b             # Q6_K (~22 GB) fits either 32 GB card
+    charter: charters/local.md
+    http:
+      base_url: http://ollama:11434/v1   # tailnet host; api_key ignored by Ollama
+      api_key_env: null            # no auth (tailnet-only substrate)
+      metered: false
+      local: true
+      total_timeout_s: 240
+
+# The fourth seat is OFF by default. Two dials turn it on: `enabled` and
+# `variant`. Switching cloud <-> second-GPU is a one-line change.
+fourth:
+  role: fourth
+  enabled: false
+  mode: tiebreaker                 # tiebreaker | specialist | off
+  variant: cloud_api               # cloud_api | second_gpu
+  variants:
+    cloud_api:
+      role: fourth
+      enabled: true
+      adapter: http_openai
+      model: deepseek-reasoner
+      charter: charters/fourth.md
+      http:
+        base_url: https://api.deepseek.com/v1
+        api_key_env: DEEPSEEK_API_KEY
+        metered: true
+        local: false
+        price_per_mtok: { input: 0.55, output: 2.19 }
+        total_timeout_s: 300
+    second_gpu:
+      role: fourth
+      enabled: true
+      adapter: http_openai
+      model: gpt-oss-20b           # different family than the primary local seat
+      charter: charters/fourth.md
+      http:
+        base_url: http://ollama-gpu2:11435/v1
+        api_key_env: null
+        metered: false
+        local: true
+        total_timeout_s: 300
