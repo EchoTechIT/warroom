@@ -37,18 +37,28 @@ class Verdict:
 def parse_verdict(adversary_content: str) -> Verdict:
     """Extract the adversary's structured verdict.
 
+    Two hardening rules:
+
+    * The **last** verdict block wins. The adversary is instructed to *end* its
+      message with the trailer, so earlier fenced blocks are quoted material —
+      the artifact under review, an example in the discussion — and must never
+      speak for the reviewer.
+    * ``certify`` must be the JSON literal ``true``. Any other value ("false",
+      "true", 1) reads as not certified — a type coercion must never
+      manufacture consensus.
+
     Missing or malformed trailer is treated as *not certified* — we never let an
     unparseable review be read as consensus.
     """
-    m = _VERDICT_RE.search(adversary_content or "")
-    if not m:
+    blocks = _VERDICT_RE.findall(adversary_content or "")
+    if not blocks:
         return Verdict(certify=False, objections=[], raw_found=False)
     try:
-        data = json.loads(m.group(1))
+        data = json.loads(blocks[-1])
     except json.JSONDecodeError:
         return Verdict(certify=False, objections=[], raw_found=False)
     return Verdict(
-        certify=bool(data.get("certify", False)),
+        certify=data.get("certify") is True,
         objections=list(data.get("objections", []) or []),
     )
 

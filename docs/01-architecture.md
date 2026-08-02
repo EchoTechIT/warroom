@@ -38,8 +38,12 @@ unmetered (cost always 0); only cloud-API operators accrue dollars.
 subprocess plumbing shared by [`ClaudeCodeAdapter`](../src/warroom/adapters/cli_claude_code.py)
 and [`CodexAdapter`](../src/warroom/adapters/cli_codex.py). Prompt on **stdin**
 (no arg-length/escaping traps), spawned with `create_subprocess_exec` (argv
-array, never a shell), in an **isolated scratch cwd** so a file-editing CLI can't
-touch this repo. Auth is the CLI's own login; Warroom stores nothing.
+array, never a shell) in its own process group — a timed-out turn kills the
+whole CLI tree, never orphans it. Commands run in a **scratch cwd** so
+relative-path writes land in a throwaway temp dir; that is hygiene, not a
+sandbox — real isolation comes from the tool's own sandbox flags (e.g.
+`sandbox: read-only`) or OS-level sandboxing around Warroom itself. Auth is
+the CLI's own login; Warroom stores nothing.
 
 **HTTP OpenAI-compatible** ([`http_openai.py`](../src/warroom/adapters/http_openai.py))
 — one class for Ollama *and* any cloud endpoint; they differ only by `base_url`,

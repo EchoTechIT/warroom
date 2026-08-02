@@ -3,16 +3,21 @@
     INTAKE
       -> architect PROPOSE (first draft)
     ROUND n (1..max_rounds):
-      CRITIQUE   adversary (+ local, + fourth-as-specialist) run concurrently
+      CRITIQUE   adversary + local (+ fourth when ``fourth_mode="specialist"``)
+                 run concurrently
       REVISE     architect integrates or rebuts -> new draft
-      [ARBITRATE] fourth-as-tiebreaker, only on a near-deadlock
+      [ARBITRATE] fourth, only when ``fourth_mode="tiebreaker"`` and only on a
+                 near-deadlock
       GATE       stop? (adversary-certify | max_rounds | budget/quorum)
-    SYNTHESIZE   architect emits final artifact + change log
+    SYNTHESIZE   architect emits final artifact + change log; on a consensus
+                 stop the certified artifact is guarded — a synthesis that does
+                 not carry it verbatim is recorded but does not replace it
     EMIT         handled by the caller (see report.py)
 
 No hidden agent recursion: an explicit phase sequence a reviewer can audit.
 Operator unavailability is a normal branch, not a crash — a missing critic just
-drops out as long as quorum (architect + >=1 critic) holds.
+drops out as long as quorum (architect + >=1 critic *who actually delivered a
+critique this round*) holds.
 """
 from __future__ import annotations
 
@@ -45,10 +50,29 @@ class RunResult:
     budget: dict
     unavailable: List[str] = field(default_factory=list)
     truncated: bool = False
+    #: True when the run ended with no usable artifact at all (e.g. the
+    #: architect never produced an ok draft). Callers must not present the
+    #: output of a failed run as a reviewed deliverable.
+    failed: bool = False
 
 
 def _norm(s: str) -> str:
-    return " ".join((s or "").split())
+    """Normalize an artifact for change detection, preserving line structure.
+
+    Trailing whitespace and blank-line runs are noise; newlines and leading
+    indentation are not — in a code artifact, indentation *is* semantics, and a
+    normalization that erased it would let a semantically different revision
+    read as "stable", which is one half of the consensus gate.
+    """
+    lines = [ln.rstrip() for ln in (s or "").splitlines()]
+    out: List[str] = []
+    for ln in lines:
+        if not ln and (not out or not out[-1]):
+            continue  # drop leading blanks and collapse blank-line runs
+        out.append(ln)
+    while out and not out[-1]:
+        out.pop()
+    return "\n".join(out)
 
 
 class RoundEngine:
@@ -63,6 +87,7 @@ class RoundEngine:
         compaction: Optional[dict] = None,
         invoke: Optional[Callable] = None,
         panel_note: str = "",
+        fourth_mode: str = "tiebreaker",
     ) -> None:
         self.panel = panel
         self.charters = charters
@@ -71,8 +96,10 @@ class RoundEngine:
         self.quorum_min = quorum_min
         self.compaction = compaction or {}
         self.panel_note = panel_note
+        self.fourth_mode = fourth_mode
         self.transcript = Transcript()
         self.unavailable: set[str] = set()
+        self._compact_lock = asyncio.Lock()
 
         # Late import keeps the engine importable without the invoke module's
         # optional deps; the default is the real policy wrapper.
@@ -96,14 +123,35 @@ class RoundEngine:
         out: List[OperatorAdapter] = []
         out.extend(self._by_role(Role.ADVERSARY))
         out.extend(self._by_role(Role.LOCAL))
+        if self.fourth_mode == "specialist":
+            out.extend(self._by_role(Role.FOURTH))
         return out
 
-    def _quorum_ok(self) -> bool:
+    def _quorum_ok(self, live_critics: Optional[int] = None) -> bool:
+        """Quorum = architect + >=1 effective critic.
+
+        At GATE, ``live_critics`` counts critics by *delivery this round*: a
+        seat that returned EMPTY/TIMEOUT/ERROR contributed nothing, and a run
+        whose critics never speak must not complete as if it had been reviewed.
+        Without ``live_critics`` (pre-round), panel membership is used.
+        """
         arch = 1 if self._architect() else 0
-        return arch + len(self._critics()) >= self.quorum_min
+        critics = len(self._critics()) if live_critics is None else live_critics
+        return arch + critics >= self.quorum_min
 
     # -- a single turn -----------------------------------------------------
     async def _turn(self, adapter: OperatorAdapter, phase: Phase, round_no: int) -> TurnResult:
+        if self.budget.hard_stop():
+            # Crossing a hard limit stops the very next call, not just the next
+            # GATE — otherwise one crossed cap still buys a whole round of
+            # spend (critique + revise + arbitrate + synthesize).
+            return TurnResult(
+                operator_name=adapter.name,
+                role=adapter.role,
+                content="",
+                status=Status.ERROR,
+                error="skipped: budget exhausted before call",
+            )
         await self._maybe_compact()
         charter = self.charters.get(adapter.role, f"You are the {adapter.role.value}.")
         req = TurnRequest(
@@ -147,25 +195,30 @@ class RoundEngine:
         )
 
     async def _maybe_compact(self) -> None:
+        """Compact old discussion via the local operator, natively async.
+
+        Failure of any kind — no local seat, summarizer error, timeout, empty
+        result — leaves the transcript **intact**. History is only ever
+        replaced by a real summary, never by a placeholder: folding turns into
+        an error string would be silent data loss dressed up as compaction.
+
+        The lock serializes concurrent critics' turns through the trigger
+        check, so two turns can never fold the same rounds twice.
+        """
         if not self.compaction:
             return
-        frac = self.compaction.get("trigger_fraction", 0.6)
-        cap = self.budget.per_turn_token_cap
-        if not self.transcript.needs_compaction(Role.LOCAL, cap, frac):
-            return
-        summarizer = self._compaction_summarizer()
-        if summarizer is None:
-            return  # no free local model available; leave the transcript intact
-        self.transcript.compact(summarizer)
-
-    def _compaction_summarizer(self):
-        locals_ = self._by_role(Role.LOCAL)
-        if not locals_:
-            return None
-        adapter = locals_[0]
-
-        def summarize(text: str) -> str:
-            # Synchronous shim: compaction runs a quick, bounded local call.
+        async with self._compact_lock:
+            frac = self.compaction.get("trigger_fraction", 0.6)
+            cap = self.budget.per_turn_token_cap
+            if not self.transcript.needs_compaction(Role.LOCAL, cap, frac):
+                return
+            locals_ = self._by_role(Role.LOCAL)
+            if not locals_:
+                return
+            adapter = locals_[0]
+            batch = self.transcript.compaction_batch()
+            if batch is None:
+                return
             req = TurnRequest(
                 role=Role.LOCAL,
                 system_prompt="Summarize the discussion faithfully and compactly.",
@@ -173,16 +226,22 @@ class RoundEngine:
                 transcript="",
                 round_no=0,
                 phase=Phase.INTAKE,
-                phase_instruction="Summarize the following discussion in <=200 words:\n\n" + text,
+                phase_instruction="Summarize the following discussion in <=200 words:\n\n" + batch,
             )
             try:
-                res = asyncio.get_event_loop().run_until_complete(adapter.invoke(req))
-                return res.content if res.ok else "[summary unavailable]"
-            except RuntimeError:
-                # Already inside a running loop; skip rather than deadlock.
-                return "[summary skipped: nested loop]"
-
-        return summarize
+                res = await asyncio.wait_for(
+                    adapter.invoke(req),
+                    timeout=getattr(adapter, "total_timeout_s", 300.0),
+                )
+            except asyncio.TimeoutError:
+                return
+            except Exception:
+                return
+            if not res.ok:
+                return
+            self.budget.record(res.usage)
+            summary = res.content
+            self.transcript.compact(lambda _text: summary)
 
     # -- the run -----------------------------------------------------------
     async def run(self, task: str) -> RunResult:
@@ -210,6 +269,7 @@ class RoundEngine:
             critic_results = await asyncio.gather(
                 *[self._turn(c, Phase.CRITIQUE, round_no) for c in critics]
             ) if critics else []
+            live_critics = sum(1 for r in critic_results if r.ok)
             adversary_content = next(
                 (r.content for r in critic_results if r.role is Role.ADVERSARY and r.ok),
                 None,
@@ -237,7 +297,7 @@ class RoundEngine:
                 architect_changed=architect_changed,
                 budget_exhausted=exhausted,
                 budget_reason="; ".join(self.budget.reasons[-1:]) or "limit",
-                quorum_ok=self._quorum_ok(),
+                quorum_ok=self._quorum_ok(live_critics),
                 require_certify=self.require_certify,
             )
             if decision.stop:
@@ -247,14 +307,24 @@ class RoundEngine:
 
             round_no += 1
 
-        # SYNTHESIZE — final artifact + change log.
+        # SYNTHESIZE — final artifact + change log. On a consensus stop the
+        # adversary certified a *specific* artifact; a synthesis that does not
+        # carry that text (verbatim, modulo normalization) is an unreviewed
+        # rewrite — it stays in the transcript as a turn, but it does not
+        # replace the certified artifact.
+        certified_stop = stop_reason.startswith("consensus")
         architect = self._architect()
         final = self.transcript.current_artifact
         if architect is not None:
             synth = await self._turn(architect, Phase.SYNTHESIZE, rounds_run)
             if synth.ok:
-                final = synth.content
-                self.transcript.set_artifact(final)
+                unreviewed_rewrite = (
+                    certified_stop
+                    and _norm(self.transcript.current_artifact) not in _norm(synth.content)
+                )
+                if not unreviewed_rewrite:
+                    final = synth.content
+                    self.transcript.set_artifact(final)
 
         return RunResult(
             task=task,
@@ -266,9 +336,12 @@ class RoundEngine:
             budget=self.budget.summary(),
             unavailable=sorted(self.unavailable),
             truncated=truncated,
+            failed=not final.strip(),
         )
 
     async def _maybe_arbitrate(self, round_no: int, adversary_content: Optional[str], architect_changed: bool) -> None:
+        if self.fourth_mode != "tiebreaker":
+            return  # a specialist fourth critiques every round instead
         fourth = self._by_role(Role.FOURTH)
         if not fourth:
             return

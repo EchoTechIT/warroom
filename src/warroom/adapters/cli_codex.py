@@ -27,8 +27,16 @@ class CodexAdapter(CliShellAdapter):
         return args
 
     def parse(self, stdout: str, stderr: str, returncode: int) -> TurnResult:
-        if returncode != 0 and not stdout.strip():
-            return self._unavailable(f"codex exited {returncode}: {stderr.strip()[:200]}")
+        if returncode != 0:
+            if not stdout.strip():
+                return self._unavailable(f"codex exited {returncode}: {stderr.strip()[:200]}")
+            # Same rule as the Claude adapter: a non-zero exit with partial
+            # output is a truncated stream, never an ok critique.
+            return TurnResult(
+                self.name, self.role, "", status=Status.ERROR,
+                error=f"codex exited {returncode} with partial output: {stderr.strip()[:200]}",
+                raw=stdout[:500],
+            )
 
         # Prefer JSON if present (one object, or JSONL with a final message);
         # otherwise treat stdout as the plain critique text.

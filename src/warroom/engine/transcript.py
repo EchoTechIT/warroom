@@ -94,18 +94,34 @@ class Transcript:
     def needs_compaction(self, role: Role, per_turn_token_cap: int, trigger_fraction: float) -> bool:
         return self.approx_tokens(role) > per_turn_token_cap * trigger_fraction
 
+    def _compactable(self, keep_recent_rounds: int) -> List[Turn]:
+        if not self._turns:
+            return []
+        latest_round = max(t.round_no for t in self._turns)
+        cutoff = latest_round - keep_recent_rounds
+        return [t for t in self._turns if t.round_no <= cutoff and not t.summarized]
+
+    def compaction_batch(self, keep_recent_rounds: int = 1) -> Optional[str]:
+        """Render the discussion ``compact`` would fold, or ``None`` when there
+        is nothing worth folding. Callers obtain the summary *asynchronously*
+        (the engine awaits the local operator) and then apply :meth:`compact`
+        with the finished text — the transcript never blocks on a model call.
+        """
+        old = self._compactable(keep_recent_rounds)
+        if len(old) < 2:
+            return None
+        return "\n\n".join(f"[{t.role.upper()} r{t.round_no}] {t.content}" for t in old)
+
     def compact(self, summarize: Callable[[str], str], keep_recent_rounds: int = 1) -> None:
         """Fold discussion older than the most recent ``keep_recent_rounds`` into
         a single labeled summary turn. ``summarize`` is supplied by the caller
-        (the free local operator, per policy). Never touches the artifact.
+        (the free local operator, per policy) and must already have the summary
+        in hand or compute it without blocking. Never touches the artifact.
         """
-        if not self._turns:
-            return
-        latest_round = max(t.round_no for t in self._turns)
-        cutoff = latest_round - keep_recent_rounds
-        old = [t for t in self._turns if t.round_no <= cutoff and not t.summarized]
+        old = self._compactable(keep_recent_rounds)
         if len(old) < 2:
             return  # not worth summarizing a single turn
+        cutoff = max(t.round_no for t in old)
 
         rendered = "\n\n".join(
             f"[{t.role.upper()} r{t.round_no}] {t.content}" for t in old
@@ -126,11 +142,21 @@ class Transcript:
 
     # -- persistence -------------------------------------------------------
     def write_jsonl(self, path: str | Path) -> None:
+        """Write turns as JSONL plus a trailing artifact record.
+
+        The current artifact is canonical state, not derivable from the turns
+        (SYNTHESIZE may be guarded, PROPOSE may have failed) — a round-trip
+        that dropped it would silently unpin the one thing the run certified.
+        """
         p = Path(path)
         p.parent.mkdir(parents=True, exist_ok=True)
         with p.open("w", encoding="utf-8") as fh:
             for t in self._turns:
                 fh.write(json.dumps(asdict(t), ensure_ascii=False) + "\n")
+            fh.write(json.dumps(
+                {"kind": "artifact", "content": self.current_artifact},
+                ensure_ascii=False,
+            ) + "\n")
 
     @classmethod
     def read_jsonl(cls, path: str | Path) -> "Transcript":
@@ -140,6 +166,10 @@ class Transcript:
                 line = line.strip()
                 if not line:
                     continue
-                t._turns.append(Turn(**json.loads(line)))
+                data = json.loads(line)
+                if data.get("kind") == "artifact":
+                    t.current_artifact = data.get("content", "")
+                    continue
+                t._turns.append(Turn(**data))
         t._seq = max((x.seq for x in t._turns), default=0)
         return t
