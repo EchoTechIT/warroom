@@ -27,7 +27,7 @@ the $1000–1300 price point:
 |---|---|---|
 | Intel Arc Pro B70 (32 GB ECC) | ~$1000 | slower VRAM (~608 GB/s), far thinner software adoption, and Intel's AI software retreat — IPEX-LLM archived read-only 2026-01-28 w/ a known-security-issues notice, IPEX itself discontinued after 2.8 (see docs/03) — while AMD is actively improving ROCm |
 | Used RTX 3090 (24 GB) | ~$1200 | 24 GB on a heavily-used 5-year-old card = absurd long-term risk |
-| **R9700 (32 GB)** | ~$1300 | — **locked in** (reserved 2026-08-04, in hand 2026-08-05) |
+| **R9700 (32 GB)** | ~$1300 | — **locked in** (reserved 2026-08-04, in hand 2026-08-05; street price hit $1400 within a day of the lock) |
 
 The premium bought **runtime breadth and a live, improving software path**:
 ROCm *and* Vulkan both just work across the stack (Ollama, llama.cpp/KoboldCpp,
