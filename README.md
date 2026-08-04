@@ -27,7 +27,9 @@ certifies "no material objection" — not when the author declares itself done.
 | **Local** | open model on a 32 GB GPU | Ollama OpenAI-compatible HTTP | local |
 | **Fourth** *(off by default)* | cloud API **or** 2nd-GPU model | HTTP OpenAI-compatible | metered if cloud |
 
-Runs on an **Intel Arc Pro B70** or an **AMD Radeon AI PRO R9700** (both 32 GB).
+Runs on an **AMD Radeon AI PRO R9700** (32 GB) — **locked in 2026-08-04**
+(reserved at a locked price; in hand 2026-08-05), chosen over the Intel Arc Pro
+B70 alternative (that overlay is kept for reference).
 See [`docs/02-operators-and-models.md`](docs/02-operators-and-models.md) and
 [`docs/03-hardware-substrate.md`](docs/03-hardware-substrate.md).
 
@@ -62,7 +64,7 @@ docs/            design, use cases, model + hardware choices, shortcomings, Code
 charters/        role system prompts (architect, adversary, local, fourth)
 operators.yaml   the panel (+ fourth-slot variants)
 warroom.yaml     run policy (rounds, budgets, compaction, termination)
-deploy/          ROCm + Intel-Arc Ollama overlays (substrate GPU fix)
+deploy/          ROCm Ollama overlay (live, R9700) + Intel-Arc overlay (reference)
 src/warroom/     the package (adapters, engine, config, cli, report)
 tests/           config, transcript, termination, CLI-parsing tests
 ```
@@ -72,8 +74,8 @@ tests/           config, transcript, termination, CLI-parsing tests
 Warroom is the orchestration layer on top of the **EchoTechAIStack** substrate
 (Ollama + Open WebUI + ComfyUI, Tailscale-only). It only needs Ollama's HTTP
 endpoint, so a GPU swap never touches orchestrator code — but the substrate's
-stock GPU overlay is **NVIDIA-only** and must be replaced with the ROCm or Intel
-overlay in [`deploy/`](deploy/) for the target cards. Details in
+stock GPU overlay is **NVIDIA-only** and must be replaced with the ROCm overlay
+in [`deploy/`](deploy/) for the R9700. Details in
 [`docs/03-hardware-substrate.md`](docs/03-hardware-substrate.md).
 
 ## License

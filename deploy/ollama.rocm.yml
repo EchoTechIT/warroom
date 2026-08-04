@@ -1,5 +1,8 @@
 # Ollama on AMD Radeon AI PRO R9700 (RDNA4 / gfx1201) via ROCm.
 #
+# THIS IS THE LIVE OVERLAY — the R9700 is the chosen card (locked in 2026-08-04,
+# in hand 2026-08-05). ollama.intel.yml is the Arc alternative, kept for reference.
+#
 # WHY THIS EXISTS: the EchoTechAIStack substrate ships an NVIDIA-only GPU overlay
 # (`driver: nvidia`), which cannot bind an AMD card — Ollama would silently fall
 # back to CPU. Use THIS overlay instead of docker-compose.gpu.yml on the R9700.
@@ -7,7 +10,8 @@
 # Usage (from the EchoTechAIStack dir, with this file copied in):
 #   COMPOSE_FILE=docker-compose.yml:ollama.rocm.yml docker compose up -d
 #
-# Requires: host ROCm >= 6.4 (RDNA4 support), user in `render`/`video` groups.
+# Requires: in-kernel amdgpu driver on the host (Unraid ships it; the image
+# bundles the ROCm >= 6.4 userspace RDNA4 needs), user in `render`/`video` groups.
 services:
   ollama:
     image: ollama/ollama:rocm       # ROCm build of Ollama (NOT the default CUDA image)
@@ -18,10 +22,10 @@ services:
       - video
       - render
     environment:
-      # RDNA4 (gfx1201) may need a gfx override until ROCm ships native tuning
-      # for the card; set to the nearest supported ISA if `rocminfo` complains.
-      # Leave UNSET first and only add if the model won't load on GPU.
-      - HSA_OVERRIDE_GFX_VERSION=12.0.0
+      # RDNA4 (gfx1201) is natively supported from ROCm 6.4. Leave the override
+      # UNSET first; uncomment only if `rocminfo` complains or the model won't
+      # load on GPU.
+      # - HSA_OVERRIDE_GFX_VERSION=12.0.0
       - OLLAMA_KEEP_ALIVE=30m
     # No `deploy.resources.reservations.devices` block — that path is NVIDIA
     # Container Toolkit-specific and does nothing for ROCm.

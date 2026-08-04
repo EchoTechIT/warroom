@@ -29,12 +29,16 @@ deploy:
 
 That path is **NVIDIA Container Toolkit-specific**. On an Intel Arc or an AMD
 ROCm card it binds nothing and Ollama **silently falls back to CPU** — slow, and
-easy to miss. Both target cards therefore need a different overlay, shipped in
-this repo under [`deploy/`](../deploy/).
+easy to miss. The replacement overlays ship in this repo under
+[`deploy/`](../deploy/).
 
-## AMD Radeon AI PRO R9700 (RDNA4 / gfx1201)
+## AMD Radeon AI PRO R9700 (RDNA4 / gfx1201) — THE card (locked in 2026-08-04)
 
-- 32 GB GDDR6, native **ROCm** (needs host ROCm ≥ 6.4 for RDNA4).
+- 32 GB GDDR6, native **ROCm**. Goes into the **Unraid box** (the sold 5060 Ti's
+  slot) — the fleet's only dGPU. In hand 2026-08-05, install pending.
+- RDNA4 needs ROCm ≥ 6.4. In the container path that means the *image's* ROCm
+  (`ollama/ollama:rocm` bundles its userspace); the host only needs the in-kernel
+  `amdgpu` driver, which Unraid ships.
 - Use [`deploy/ollama.rocm.yml`](../deploy/ollama.rocm.yml): the `ollama/ollama:rocm`
   image, `/dev/kfd` + `/dev/dri` devices, `video`/`render` groups. No
   `deploy.resources` block (that's NVIDIA-only).
@@ -45,14 +49,28 @@ this repo under [`deploy/`](../deploy/).
 COMPOSE_FILE=docker-compose.yml:ollama.rocm.yml docker compose up -d
 ```
 
-## Intel Arc Pro B70 (Battlemage / Xe2)
+## Intel Arc Pro B70 (Battlemage / Xe2) — NOT purchased, kept for reference
+
+The B70 was the cheaper alternative; the R9700 was bought instead (see
+[`02-operators-and-models.md`](02-operators-and-models.md) for the rationale).
+This section and its overlay stay as reference in case an Arc card ever joins
+the fleet.
 
 - 32 GB ECC GDDR6, ~608 GB/s.
-- Upstream Ollama gained **Vulkan** Arc support in 0.12.11, but **SYCL** (via
-  Intel's IPEX-LLM) is roughly **2× faster** on Arc.
-- Use [`deploy/ollama.intel.yml`](../deploy/ollama.intel.yml): the IPEX-LLM
-  Ollama image with the SYCL backend and `/dev/dri` passed through. The simpler
-  (half-speed) fallback is upstream `ollama/ollama` ≥ 0.12.11 with Vulkan.
+- **The SYCL fast path is DEAD (verified 2026-08-04, part of why the B70
+  lost).** Earlier drafts of this doc recommended IPEX-LLM's SYCL backend as
+  "roughly 2× faster" than Vulkan on Arc — but `intel/ipex-llm` was **archived
+  read-only on 2026-01-28**, with Intel's notice: no maintenance, no patches
+  accepted, and *"identified as having known security issues"* (last real
+  updates ~May 2025). IPEX itself (`intel-extension-for-pytorch`) was
+  discontinued after 2.8 — features upstreamed into PyTorch, maintenance ended
+  March 2026.
+- **The realistic Arc path is therefore upstream `ollama/ollama` ≥ 0.12.11 with
+  the Vulkan backend** and `/dev/dri` passed through — see
+  [`deploy/ollama.intel.yml`](../deploy/ollama.intel.yml). Do not deploy the
+  archived IPEX-LLM images. Intel's remaining first-party consumer AI story
+  (AI Playground) is **Windows-only** — irrelevant to a headless Linux/Unraid
+  fleet, which is why post-IPEX Arc is effectively community-supported here.
 
 ```bash
 COMPOSE_FILE=docker-compose.yml:ollama.intel.yml docker compose up -d
