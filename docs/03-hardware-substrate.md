@@ -58,7 +58,10 @@ the fleet.
 
 - 32 GB ECC GDDR6, ~608 GB/s.
 - Upstream Ollama gained **Vulkan** Arc support in 0.12.11, but **SYCL** (via
-  Intel's IPEX-LLM) is roughly **2× faster** on Arc.
+  Intel's IPEX-LLM) is roughly **2× faster** on Arc. **Caveat (part of why the
+  B70 lost):** Intel's commitment to IPEX has visibly wound down — if IPEX-LLM
+  stops tracking upstream, the SYCL fast path decays and Vulkan (half speed)
+  becomes the realistic Arc baseline.
 - Use [`deploy/ollama.intel.yml`](../deploy/ollama.intel.yml): the IPEX-LLM
   Ollama image with the SYCL backend and `/dev/dri` passed through. The simpler
   (half-speed) fallback is upstream `ollama/ollama` ≥ 0.12.11 with Vulkan.

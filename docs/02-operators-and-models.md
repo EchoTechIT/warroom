@@ -20,13 +20,20 @@ Gemini was dropped from the roster by choice.
 ## Hardware sizing (the card is 32 GB)
 
 **DECIDED 2026-08-04 — purchased: AMD Radeon AI PRO R9700** (32 GB GDDR6,
-RDNA4/gfx1201, ~640 GB/s), over the Intel Arc Pro B70 (32 GB ECC GDDR6,
-~608 GB/s, ~$400 cheaper). The premium bought **runtime breadth and a known
-path**: ROCm *and* Vulkan both just work across the stack (Ollama, llama.cpp/
-KoboldCpp, ComfyUI), including inside Unraid Docker where the card lives — and
-the worst-case fallback is a plain Ubuntu VM with the card passed through. Arc
-is rough even on bare Windows/Ubuntu, let alone Unraid Docker, and its fast
-path (IPEX-LLM/SYCL) is a third toolchain with a far thinner track record.
+RDNA4/gfx1201, ~640 GB/s). The full field at the $1000–1300 price point:
+
+| Option | Price | Killed by |
+|---|---|---|
+| Intel Arc Pro B70 (32 GB ECC) | ~$1000 | slower VRAM (~608 GB/s), far thinner software adoption, and Intel's AI software push visibly slowing (IPEX being abandoned) — while AMD is actively improving ROCm |
+| Used RTX 3090 (24 GB) | ~$1200 | 24 GB on a heavily-used 5-year-old card = absurd long-term risk |
+| **R9700 (32 GB)** | ~$1300 | — **bought** |
+
+The premium bought **runtime breadth and a live, improving software path**:
+ROCm *and* Vulkan both just work across the stack (Ollama, llama.cpp/KoboldCpp,
+ComfyUI), including inside Unraid Docker where the card lives — and the
+worst-case fallback is a plain Ubuntu VM with the card passed through. Arc is
+rough even on bare Windows/Ubuntu, let alone Unraid Docker, and its fast path
+(IPEX-LLM/SYCL) is a third toolchain whose vendor commitment is now in doubt.
 Model sizing below is unchanged (the envelope was 32 GB either way).
 
 32 GB VRAM sets the local-model envelope. Rough Q4/Q5/Q6 footprints:
