@@ -17,10 +17,15 @@ families; the fourth slot, when local, should be a *third* family again (e.g.
 
 Gemini was dropped from the roster by choice.
 
-## Hardware sizing (both target cards are 32 GB)
+## Hardware sizing (the card is 32 GB)
 
-- **Intel Arc Pro B70** — 32 GB ECC GDDR6, ~608 GB/s.
-- **AMD Radeon AI PRO R9700** — 32 GB GDDR6, RDNA4, ~640 GB/s.
+**DECIDED 2026-08-04 — purchased: AMD Radeon AI PRO R9700** (32 GB GDDR6,
+RDNA4/gfx1201, ~640 GB/s), over the Intel Arc Pro B70 (32 GB ECC GDDR6,
+~608 GB/s, ~$400 cheaper). The premium bought the *known* software path: ROCm on
+gfx1201 is the exact ISA already running on the fleet's RX 9070 XT, so driver and
+tuning learnings transfer 1:1 — versus the B70's fast path being IPEX-LLM/SYCL,
+a third toolchain with a far thinner track record. Model sizing below is
+unchanged (the envelope was 32 GB either way).
 
 32 GB VRAM sets the local-model envelope. Rough Q4/Q5/Q6 footprints:
 

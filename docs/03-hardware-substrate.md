@@ -29,10 +29,10 @@ deploy:
 
 That path is **NVIDIA Container Toolkit-specific**. On an Intel Arc or an AMD
 ROCm card it binds nothing and Ollama **silently falls back to CPU** — slow, and
-easy to miss. Both target cards therefore need a different overlay, shipped in
-this repo under [`deploy/`](../deploy/).
+easy to miss. The replacement overlays ship in this repo under
+[`deploy/`](../deploy/).
 
-## AMD Radeon AI PRO R9700 (RDNA4 / gfx1201)
+## AMD Radeon AI PRO R9700 (RDNA4 / gfx1201) — THE card (purchased 2026-08-04)
 
 - 32 GB GDDR6, native **ROCm** (needs host ROCm ≥ 6.4 for RDNA4).
 - Use [`deploy/ollama.rocm.yml`](../deploy/ollama.rocm.yml): the `ollama/ollama:rocm`
@@ -45,7 +45,12 @@ this repo under [`deploy/`](../deploy/).
 COMPOSE_FILE=docker-compose.yml:ollama.rocm.yml docker compose up -d
 ```
 
-## Intel Arc Pro B70 (Battlemage / Xe2)
+## Intel Arc Pro B70 (Battlemage / Xe2) — NOT purchased, kept for reference
+
+The B70 was the cheaper alternative; the R9700 was bought instead (see
+[`02-operators-and-models.md`](02-operators-and-models.md) for the rationale).
+This section and its overlay stay as reference in case an Arc card ever joins
+the fleet.
 
 - 32 GB ECC GDDR6, ~608 GB/s.
 - Upstream Ollama gained **Vulkan** Arc support in 0.12.11, but **SYCL** (via

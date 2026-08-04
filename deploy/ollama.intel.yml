@@ -1,5 +1,8 @@
 # Ollama on Intel Arc Pro B70 (Battlemage / Xe2, 32 GB) via IPEX-LLM (SYCL).
 #
+# NOT THE LIVE OVERLAY — the B70 was not purchased (the R9700 was, 2026-08-04;
+# use ollama.rocm.yml). Kept for reference in case an Arc card ever joins the fleet.
+#
 # WHY THIS EXISTS: the EchoTechAIStack substrate ships an NVIDIA-only GPU overlay
 # (`driver: nvidia`), which cannot bind an Intel Arc card. Upstream Ollama gained
 # Vulkan Arc support in 0.12.11, but SYCL (via IPEX-LLM) is roughly 2x faster on
