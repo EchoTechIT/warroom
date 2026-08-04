@@ -1,6 +1,6 @@
 # Ollama on Intel Arc Pro B70 (Battlemage / Xe2, 32 GB) via Vulkan.
 #
-# NOT THE LIVE OVERLAY — the B70 was not purchased (the R9700 was, 2026-08-04;
+# NOT THE LIVE OVERLAY — the B70 lost to the R9700 (locked in 2026-08-04;
 # use ollama.rocm.yml). Kept for reference in case an Arc card ever joins the
 # fleet. Reference-only: never validated on hardware.
 #

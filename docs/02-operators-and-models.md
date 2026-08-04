@@ -19,14 +19,15 @@ Gemini was dropped from the roster by choice.
 
 ## Hardware sizing (the card is 32 GB)
 
-**DECIDED 2026-08-04 — purchased: AMD Radeon AI PRO R9700** (32 GB GDDR6,
-RDNA4/gfx1201, ~640 GB/s). The full field at the $1000–1300 price point:
+**DECIDED 2026-08-04: AMD Radeon AI PRO R9700** (32 GB GDDR6, RDNA4/gfx1201,
+~640 GB/s) — reserved at a locked price, in hand 2026-08-05. The full field at
+the $1000–1300 price point:
 
 | Option | Price | Killed by |
 |---|---|---|
 | Intel Arc Pro B70 (32 GB ECC) | ~$1000 | slower VRAM (~608 GB/s), far thinner software adoption, and Intel's AI software retreat — IPEX-LLM archived read-only 2026-01-28 w/ a known-security-issues notice, IPEX itself discontinued after 2.8 (see docs/03) — while AMD is actively improving ROCm |
 | Used RTX 3090 (24 GB) | ~$1200 | 24 GB on a heavily-used 5-year-old card = absurd long-term risk |
-| **R9700 (32 GB)** | ~$1300 | — **bought** |
+| **R9700 (32 GB)** | ~$1300 | — **locked in** (reserved 2026-08-04, in hand 2026-08-05) |
 
 The premium bought **runtime breadth and a live, improving software path**:
 ROCm *and* Vulkan both just work across the stack (Ollama, llama.cpp/KoboldCpp,

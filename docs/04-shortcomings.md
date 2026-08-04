@@ -54,7 +54,7 @@ summary can mislead later rounds.
 
 ## 5. GPU compatibility gap in the substrate
 
-EchoTechAIStack's stock GPU overlay is **NVIDIA-only**; on the purchased R9700
+EchoTechAIStack's stock GPU overlay is **NVIDIA-only**; on the chosen R9700
 (as on the Arc B70 alternative) Ollama silently runs on CPU.
 
 **Mitigation.** Warroom is transport-decoupled (needs only the HTTP endpoint), so

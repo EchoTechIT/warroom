@@ -27,8 +27,9 @@ certifies "no material objection" — not when the author declares itself done.
 | **Local** | open model on a 32 GB GPU | Ollama OpenAI-compatible HTTP | local |
 | **Fourth** *(off by default)* | cloud API **or** 2nd-GPU model | HTTP OpenAI-compatible | metered if cloud |
 
-Runs on an **AMD Radeon AI PRO R9700** (32 GB) — **purchased 2026-08-04**, chosen
-over the Intel Arc Pro B70 alternative (that overlay is kept for reference).
+Runs on an **AMD Radeon AI PRO R9700** (32 GB) — **locked in 2026-08-04**
+(reserved at a locked price; in hand 2026-08-05), chosen over the Intel Arc Pro
+B70 alternative (that overlay is kept for reference).
 See [`docs/02-operators-and-models.md`](docs/02-operators-and-models.md) and
 [`docs/03-hardware-substrate.md`](docs/03-hardware-substrate.md).
 

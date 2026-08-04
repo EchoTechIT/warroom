@@ -32,10 +32,10 @@ ROCm card it binds nothing and Ollama **silently falls back to CPU** — slow, a
 easy to miss. The replacement overlays ship in this repo under
 [`deploy/`](../deploy/).
 
-## AMD Radeon AI PRO R9700 (RDNA4 / gfx1201) — THE card (purchased 2026-08-04)
+## AMD Radeon AI PRO R9700 (RDNA4 / gfx1201) — THE card (locked in 2026-08-04)
 
-- 32 GB GDDR6, native **ROCm**. Lives in the **Unraid box** (took the sold
-  5060 Ti's slot, 2026-08-04) — the fleet's only dGPU.
+- 32 GB GDDR6, native **ROCm**. Goes into the **Unraid box** (the sold 5060 Ti's
+  slot) — the fleet's only dGPU. In hand 2026-08-05, install pending.
 - RDNA4 needs ROCm ≥ 6.4. In the container path that means the *image's* ROCm
   (`ollama/ollama:rocm` bundles its userspace); the host only needs the in-kernel
   `amdgpu` driver, which Unraid ships.

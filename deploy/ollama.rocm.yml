@@ -1,7 +1,7 @@
 # Ollama on AMD Radeon AI PRO R9700 (RDNA4 / gfx1201) via ROCm.
 #
-# THIS IS THE LIVE OVERLAY — the R9700 is the purchased card (2026-08-04).
-# ollama.intel.yml is the not-purchased Arc alternative, kept for reference.
+# THIS IS THE LIVE OVERLAY — the R9700 is the chosen card (locked in 2026-08-04,
+# in hand 2026-08-05). ollama.intel.yml is the Arc alternative, kept for reference.
 #
 # WHY THIS EXISTS: the EchoTechAIStack substrate ships an NVIDIA-only GPU overlay
 # (`driver: nvidia`), which cannot bind an AMD card — Ollama would silently fall
