@@ -1,5 +1,12 @@
 # 03 — Hardware & Substrate
 
+> **Deployed reality (2026-08-04):** the card is the **R9700**, installed in the
+> **Unraid box** (the fleet's only GPU — gaming PC and 5060 Ti sold; CUDA-free
+> fleet). The canonical substrate compose lives in the private homelab repo at
+> `echotech-homelab/compose/echotechai/` with the ROCm wiring baked in; the
+> overlays below remain as portable references, and the Intel path is not
+> deployed. Integration picture: [`06-echotech-ai-integration.md`](06-echotech-ai-integration.md).
+
 ## The substrate
 
 Warroom runs on top of **EchoTechAIStack**: a Docker-Compose stack of **Ollama**
