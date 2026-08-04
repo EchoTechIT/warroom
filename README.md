@@ -27,9 +27,12 @@ certifies "no material objection" — not when the author declares itself done.
 | **Local** | open model on a 32 GB GPU | Ollama OpenAI-compatible HTTP | local |
 | **Fourth** *(off by default)* | cloud API **or** 2nd-GPU model | HTTP OpenAI-compatible | metered if cloud |
 
-Runs on an **Intel Arc Pro B70** or an **AMD Radeon AI PRO R9700** (both 32 GB).
-See [`docs/02-operators-and-models.md`](docs/02-operators-and-models.md) and
-[`docs/03-hardware-substrate.md`](docs/03-hardware-substrate.md).
+Runs on a 32 GB GPU — **deployed today on the AMD Radeon AI PRO R9700 in the
+Unraid box** (the Intel Arc Pro B70 path remains documented as a portable
+alternative). See [`docs/02-operators-and-models.md`](docs/02-operators-and-models.md),
+[`docs/03-hardware-substrate.md`](docs/03-hardware-substrate.md), and — for how the
+panel maps onto the wider EchoTech AI strategy —
+[`docs/06-echotech-ai-integration.md`](docs/06-echotech-ai-integration.md).
 
 ## Quick start (offline, no external processes)
 
