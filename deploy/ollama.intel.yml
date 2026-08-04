@@ -1,16 +1,20 @@
-# Ollama on Intel Arc Pro B70 (Battlemage / Xe2, 32 GB) via IPEX-LLM (SYCL).
+# Ollama on Intel Arc Pro B70 (Battlemage / Xe2, 32 GB) via Vulkan.
 #
 # NOT THE LIVE OVERLAY — the B70 was not purchased (the R9700 was, 2026-08-04;
-# use ollama.rocm.yml). Kept for reference in case an Arc card ever joins the fleet.
-# NOTE: Intel's IPEX commitment has wound down; if this overlay is ever revived,
-# re-verify that the IPEX-LLM image still tracks upstream Ollama — otherwise fall
-# back to upstream ollama/ollama with Vulkan (see file footer).
+# use ollama.rocm.yml). Kept for reference in case an Arc card ever joins the
+# fleet. Reference-only: never validated on hardware.
+#
+# HISTORY (verified 2026-08-04): this overlay originally used IPEX-LLM's SYCL
+# Ollama image (~2x faster than Vulkan on Arc). That path is DEAD — intel/ipex-llm
+# was archived read-only on 2026-01-28 with Intel's notice: no maintenance, no
+# patches accepted, "identified as having known security issues". IPEX itself was
+# discontinued after 2.8 (upstreamed into PyTorch). Do NOT deploy the archived
+# intelanalytics/ipex-llm-* images. The realistic Arc path is upstream Ollama
+# (>= 0.12.11) with the experimental Vulkan backend, below.
 #
 # WHY THIS EXISTS: the EchoTechAIStack substrate ships an NVIDIA-only GPU overlay
-# (`driver: nvidia`), which cannot bind an Intel Arc card. Upstream Ollama gained
-# Vulkan Arc support in 0.12.11, but SYCL (via IPEX-LLM) is roughly 2x faster on
-# Arc — so this overlay uses the IPEX-LLM Ollama image. Use it instead of
-# docker-compose.gpu.yml on the B70.
+# (`driver: nvidia`), which cannot bind an Intel Arc card — Ollama would silently
+# fall back to CPU. Use this overlay instead of docker-compose.gpu.yml on Arc.
 #
 # Usage (from the EchoTechAIStack dir, with this file copied in):
 #   COMPOSE_FILE=docker-compose.yml:ollama.intel.yml docker compose up -d
@@ -18,9 +22,7 @@
 # Requires: host Intel GPU drivers + the `/dev/dri` render nodes present.
 services:
   ollama:
-    # IPEX-LLM's portable Ollama build with the SYCL backend for Intel GPUs.
-    # (Pin a specific tag for reproducibility once you've validated one.)
-    image: intelanalytics/ipex-llm-inference-cpp-xpu:latest
+    image: ollama/ollama:latest      # upstream; Vulkan support landed in 0.12.11
     devices:
       - /dev/dri                     # Intel GPU render nodes
     group_add:
@@ -29,8 +31,6 @@ services:
     environment:
       - OLLAMA_HOST=0.0.0.0:11434
       - OLLAMA_KEEP_ALIVE=30m
-      # SYCL device selection; leave default unless you have multiple GPUs.
-      - ONEAPI_DEVICE_SELECTOR=level_zero:0
-      - SYCL_CACHE_PERSISTENT=1
-    # Alternative (simpler, ~half the speed): upstream `ollama/ollama` >= 0.12.11
-    # with the Vulkan backend and `/dev/dri` passed through. Prefer SYCL above.
+      # Vulkan is experimental and opt-in — verify the flag name against the
+      # current Ollama docs before deploying (never tested here, see header).
+      - OLLAMA_VULKAN=1

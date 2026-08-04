@@ -57,14 +57,18 @@ This section and its overlay stay as reference in case an Arc card ever joins
 the fleet.
 
 - 32 GB ECC GDDR6, ~608 GB/s.
-- Upstream Ollama gained **Vulkan** Arc support in 0.12.11, but **SYCL** (via
-  Intel's IPEX-LLM) is roughly **2× faster** on Arc. **Caveat (part of why the
-  B70 lost):** Intel's commitment to IPEX has visibly wound down — if IPEX-LLM
-  stops tracking upstream, the SYCL fast path decays and Vulkan (half speed)
-  becomes the realistic Arc baseline.
-- Use [`deploy/ollama.intel.yml`](../deploy/ollama.intel.yml): the IPEX-LLM
-  Ollama image with the SYCL backend and `/dev/dri` passed through. The simpler
-  (half-speed) fallback is upstream `ollama/ollama` ≥ 0.12.11 with Vulkan.
+- **The SYCL fast path is DEAD (verified 2026-08-04, part of why the B70
+  lost).** Earlier drafts of this doc recommended IPEX-LLM's SYCL backend as
+  "roughly 2× faster" than Vulkan on Arc — but `intel/ipex-llm` was **archived
+  read-only on 2026-01-28**, with Intel's notice: no maintenance, no patches
+  accepted, and *"identified as having known security issues"* (last real
+  updates ~May 2025). IPEX itself (`intel-extension-for-pytorch`) was
+  discontinued after 2.8 — features upstreamed into PyTorch, maintenance ended
+  March 2026.
+- **The realistic Arc path is therefore upstream `ollama/ollama` ≥ 0.12.11 with
+  the Vulkan backend** and `/dev/dri` passed through — see
+  [`deploy/ollama.intel.yml`](../deploy/ollama.intel.yml). Do not deploy the
+  archived IPEX-LLM images.
 
 ```bash
 COMPOSE_FILE=docker-compose.yml:ollama.intel.yml docker compose up -d

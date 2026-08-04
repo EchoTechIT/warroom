@@ -24,7 +24,7 @@ RDNA4/gfx1201, ~640 GB/s). The full field at the $1000–1300 price point:
 
 | Option | Price | Killed by |
 |---|---|---|
-| Intel Arc Pro B70 (32 GB ECC) | ~$1000 | slower VRAM (~608 GB/s), far thinner software adoption, and Intel's AI software push visibly slowing (IPEX being abandoned) — while AMD is actively improving ROCm |
+| Intel Arc Pro B70 (32 GB ECC) | ~$1000 | slower VRAM (~608 GB/s), far thinner software adoption, and Intel's AI software retreat — IPEX-LLM archived read-only 2026-01-28 w/ a known-security-issues notice, IPEX itself discontinued after 2.8 (see docs/03) — while AMD is actively improving ROCm |
 | Used RTX 3090 (24 GB) | ~$1200 | 24 GB on a heavily-used 5-year-old card = absurd long-term risk |
 | **R9700 (32 GB)** | ~$1300 | — **bought** |
 
@@ -33,7 +33,7 @@ ROCm *and* Vulkan both just work across the stack (Ollama, llama.cpp/KoboldCpp,
 ComfyUI), including inside Unraid Docker where the card lives — and the
 worst-case fallback is a plain Ubuntu VM with the card passed through. Arc is
 rough even on bare Windows/Ubuntu, let alone Unraid Docker, and its fast path
-(IPEX-LLM/SYCL) is a third toolchain whose vendor commitment is now in doubt.
+(IPEX-LLM/SYCL) is a third toolchain Intel has since archived outright.
 Model sizing below is unchanged (the envelope was 32 GB either way).
 
 32 GB VRAM sets the local-model envelope. Rough Q4/Q5/Q6 footprints:
