@@ -68,7 +68,9 @@ the fleet.
 - **The realistic Arc path is therefore upstream `ollama/ollama` ≥ 0.12.11 with
   the Vulkan backend** and `/dev/dri` passed through — see
   [`deploy/ollama.intel.yml`](../deploy/ollama.intel.yml). Do not deploy the
-  archived IPEX-LLM images.
+  archived IPEX-LLM images. Intel's remaining first-party consumer AI story
+  (AI Playground) is **Windows-only** — irrelevant to a headless Linux/Unraid
+  fleet, which is why post-IPEX Arc is effectively community-supported here.
 
 ```bash
 COMPOSE_FILE=docker-compose.yml:ollama.intel.yml docker compose up -d
