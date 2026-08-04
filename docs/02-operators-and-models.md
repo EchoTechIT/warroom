@@ -21,11 +21,13 @@ Gemini was dropped from the roster by choice.
 
 **DECIDED 2026-08-04 — purchased: AMD Radeon AI PRO R9700** (32 GB GDDR6,
 RDNA4/gfx1201, ~640 GB/s), over the Intel Arc Pro B70 (32 GB ECC GDDR6,
-~608 GB/s, ~$400 cheaper). The premium bought the *known* software path: ROCm on
-gfx1201 is the exact ISA already running on the fleet's RX 9070 XT, so driver and
-tuning learnings transfer 1:1 — versus the B70's fast path being IPEX-LLM/SYCL,
-a third toolchain with a far thinner track record. Model sizing below is
-unchanged (the envelope was 32 GB either way).
+~608 GB/s, ~$400 cheaper). The premium bought **runtime breadth and a known
+path**: ROCm *and* Vulkan both just work across the stack (Ollama, llama.cpp/
+KoboldCpp, ComfyUI), including inside Unraid Docker where the card lives — and
+the worst-case fallback is a plain Ubuntu VM with the card passed through. Arc
+is rough even on bare Windows/Ubuntu, let alone Unraid Docker, and its fast
+path (IPEX-LLM/SYCL) is a third toolchain with a far thinner track record.
+Model sizing below is unchanged (the envelope was 32 GB either way).
 
 32 GB VRAM sets the local-model envelope. Rough Q4/Q5/Q6 footprints:
 

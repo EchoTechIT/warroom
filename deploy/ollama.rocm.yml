@@ -10,7 +10,8 @@
 # Usage (from the EchoTechAIStack dir, with this file copied in):
 #   COMPOSE_FILE=docker-compose.yml:ollama.rocm.yml docker compose up -d
 #
-# Requires: host ROCm >= 6.4 (RDNA4 support), user in `render`/`video` groups.
+# Requires: in-kernel amdgpu driver on the host (Unraid ships it; the image
+# bundles the ROCm >= 6.4 userspace RDNA4 needs), user in `render`/`video` groups.
 services:
   ollama:
     image: ollama/ollama:rocm       # ROCm build of Ollama (NOT the default CUDA image)
@@ -21,10 +22,9 @@ services:
       - video
       - render
     environment:
-      # RDNA4 (gfx1201) is natively supported from ROCm 6.4 — and the same ISA
-      # already runs on the fleet's RX 9070 XT, so the stack is proven. Leave the
-      # override UNSET first; uncomment only if `rocminfo` complains or the model
-      # won't load on GPU.
+      # RDNA4 (gfx1201) is natively supported from ROCm 6.4. Leave the override
+      # UNSET first; uncomment only if `rocminfo` complains or the model won't
+      # load on GPU.
       # - HSA_OVERRIDE_GFX_VERSION=12.0.0
       - OLLAMA_KEEP_ALIVE=30m
     # No `deploy.resources.reservations.devices` block — that path is NVIDIA
