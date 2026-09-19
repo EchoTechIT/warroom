@@ -6,7 +6,11 @@ WarRoom is a self-hosted, LAN-first mission control for building personal softwa
 
 This is a clean project restart. The product direction, current seat assignments, security invariants, surviving audit findings, and build sequence live in [`docs/WARROOM_SOURCE_OF_TRUTH.md`](docs/WARROOM_SOURCE_OF_TRUTH.md).
 
+The recovered interface requirements live in [`docs/PRODUCT_UI_SPEC.md`](docs/PRODUCT_UI_SPEC.md). The exhaustive migration audit and source disposition live in [`docs/PRESERVATION_MANIFEST.md`](docs/PRESERVATION_MANIFEST.md).
+
 No runnable application has been imported yet. The previous prototype contained useful engine ideas and tests, but also stubbed provider transports and unresolved safety defects. It remains available read-only in [`EchoTechIT/warroom-archive`](https://github.com/EchoTechIT/warroom-archive).
+
+No surviving visual WarRoom mockup or frontend was found in the recovered sources. Do not assume an undocumented design exists; implement against the product/UI specification.
 
 ## Bootstrap team
 
