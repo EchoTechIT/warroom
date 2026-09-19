@@ -261,23 +261,27 @@ This gives the active project a clean history and current documentation without 
 
 ## 11. Source disposition
 
-Only this document needs to move into the dedicated WarRoom project as planning context. GitHub remains the code source.
+The dedicated WarRoom project carries four canonical planning documents: this source of truth, `PRODUCT_UI_SPEC.md`, `PRESERVATION_MANIFEST.md`, and accepted records under `docs/decisions/`. GitHub remains the code source.
+
+An exhaustive recovery pass found no surviving visual WarRoom mockup, screenshot, Figma file, HTML prototype, React component, or runnable frontend. The legacy build prompt contained prose UI requirements; those requirements are now preserved and reconciled in `PRODUCT_UI_SPEC.md`. Five shared ChatGPT links were verified as unrelated EchoTech logos.
 
 | Existing source | Disposition | Information retained here |
 |---|---|---|
 | Attached `warroom-claude-warroom-program-analysis-bit4aa.zip` | Archive only | Exact `641d87d` baseline; GitHub supersedes the ZIP |
 | `09-reconciled-findings.md` | Condensed; strongest audit source | Open/closed status against `34207d9` and consolidated controls |
-| `17-ULTRACODE_BUILD_PROMPT-1-.md` | Superseded by this document | Mission-control UX, worktrees, shared context, approvals, Docker/Unraid goals |
+| `17-ULTRACODE_BUILD_PROMPT-1-.md` | Superseded; raw copy retained in the downloadable evidence bundle | Mission-control UX promoted into `PRODUCT_UI_SPEC.md`; worktrees, shared context, approvals, Docker/Unraid goals retained here |
 | `18-final-audit-warroom.md` | Historical evidence; do not carry separately | Original critical/high/medium findings and safety invariants |
 | `23-test_codex_adversarial_review.py` | Do not carry as a loose file | Its review tests were adopted and expanded on the `34207d9` branch |
 | `16-05-codex-review-brief-1-.md` and `25-05-codex-review-brief.md` | Duplicate; already represented in GitHub history | Review target and attack surfaces |
 | `22-ai-team-landscape-report-1-.md` and `24-ai-team-landscape-report-2-1-.md` | Exact duplicate; research archive only | Official-CLI constraint and shared-repo rationale |
 | `WarRoom AI Coding Subscription Upgrade…md` | Historical decision input; recommendation superseded by actual usage preference | Model strengths, local-model candidates, and plan economics |
-| `.url` shortcuts | Do not move | No unique project state |
+| `.url` shortcuts | Do not move | Verified as five unrelated EchoTech brand/logo images; no WarRoom state |
 | Small JSON exports and `users.json` | Do not move | Empty/unrelated project metadata |
 | Unraid SMART ZIP | Do not move | Unrelated hardware diagnostic |
 | Attention Dashboard ZIP | Do not move | Separate application |
 | Usage screenshots | Do not move | Decision evidence already reflected in the Seat 1 choice |
+
+The complete file-by-file and branch-by-branch audit is recorded in `PRESERVATION_MANIFEST.md`.
 
 ## 12. Known decisions still to validate
 
